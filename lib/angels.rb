@@ -1,17 +1,19 @@
+require 'rubygems'
+require 'daemons'
+
 module Angels
 
-  def Angel.run_loop(name, opts = {}, &block)
+  def Angels.run_loop(name, opts = {}, &block)
+    caller_dir = File.expand_path(File.dirname(caller[0].scan(/^([^:]*):/).first.first))
     opts = {
       :loop_sleep   => 60,
       :retry        => true,
       :retry_sleep  => 60,
-      :rails_root   => File.expand_path(File.join(File.dirname(__FILE__), '..')),
+      :rails_root   => File.join(caller_dir, '..'), 
       :load_rails   => false,
-      :pid_dir      => File.join(File.dirname(__FILE__), '..', 'tmp'),
-      :default_env  => 'production'
+      :pid_dir      => File.join(caller_dir, '..', 'tmp'),
+      :default_env  => 'production',
     }.merge(opts)
-
-    environment_file = File.expand_path(File.dirname(__FILE__) + "/../config/environment.rb")
 
     Daemons.run_proc(name, :dir_mode => :normal, :dir => opts[:pid_dir]) do 
       if opts[:load_rails]
@@ -25,7 +27,17 @@ module Angels
           sleep opts[:loop_sleep]
         rescue SignalException, Interrupt; SystemExit; Process.exit
         rescue => e
-          HoptoadNotifier.notify(e) if defined? HoptoadNotifier
+          handler = opts[:exception_handler]
+          if handler
+            if handler.is_a? Symbol
+              case handler
+              when :hoptoad; HoptoadNotifier.notify(e)
+              else raise handler.inspect 
+              end
+            else
+              handler.call(e)
+            end
+          end
           raise e unless opts[:retry]
           sleep opts[:retry_sleep]
         end
