@@ -1,6 +1,6 @@
 module Angels
 
-  def run_loop(name, opts = {}, &block)
+  def Angel.run_loop(name, opts = {}, &block)
     opts = {
       :loop_sleep   => 60,
       :retry        => true,
