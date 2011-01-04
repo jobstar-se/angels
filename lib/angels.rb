@@ -11,7 +11,7 @@ module Angels
       :retry_sleep  => 60,
       :rails_root   => File.join(caller_dir, '..'), 
       :load_rails   => false,
-      :pid_dir      => File.join(caller_dir, '..', 'tmp'),
+      :pid_dir      => File.join(caller_dir, '..', 'tmp', 'pids'),
       :default_env  => 'production',
     }.merge(opts)
 
